@@ -1,0 +1,172 @@
+@model CampusConnect.Web.Models.ViewModels.RecursoDetailsViewModel
+@using CampusConnect.Web.Models.Enums
+@{
+    ViewData["Title"] = $"Ficha Técnica {Model.Recurso.Codigo}";
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Inventario
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Ficha técnica del recurso -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <span class="badge bg-primary font-monospace">@Model.Recurso.Codigo</span>
+                <span class="small text-muted">Registrado: @Model.Recurso.FechaRegistro.ToString("dd/MM/yyyy")</span>
+            </div>
+            <div class="card-body p-4">
+                <h4 class="fw-bold text-dark mb-3">@Model.Recurso.Nombre</h4>
+
+                <div class="mb-3">
+                    <label class="text-muted small fw-semibold text-uppercase d-block">Tipo de Recurso</label>
+                    <div class="fw-semibold text-dark">
+                        @if (Model.Recurso.Tipo == TipoRecurso.Equipamiento)
+                        {
+                            <span class="text-primary"><i class="bi bi-laptop me-1"></i>Equipamiento Tecnológico</span>
+                        }
+                        else
+                        {
+                            <span class="text-info"><i class="bi bi-building me-1"></i>Infraestructura Física</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small fw-semibold text-uppercase d-block">Ubicación Física</label>
+                    <div class="text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i>@Model.Recurso.Ubicacion</div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted small fw-semibold text-uppercase d-block">Estado Operativo Actual</label>
+                    @switch (Model.Recurso.Estado)
+                    {
+                        case EstadoRecurso.Disponible:
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
+                                <i class="bi bi-check-circle-fill me-1"></i>Disponible / En Operación
+                            </span>
+                            break;
+                        case EstadoRecurso.EnUso:
+                            <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 fs-6">
+                                <i class="bi bi-play-circle-fill me-1"></i>En Uso Regular
+                            </span>
+                            break;
+                        case EstadoRecurso.EnMantenimiento:
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 fs-6">
+                                <i class="bi bi-tools me-1"></i>En Mantenimiento Preventivo/Correctivo
+                            </span>
+                            break;
+                        case EstadoRecurso.FueraDeServicio:
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fs-6">
+                                <i class="bi bi-x-circle-fill me-1"></i>Fuera de Servicio / Inoperativo
+                            </span>
+                            break;
+                    }
+                </div>
+
+                <div class="mb-4">
+                    <label class="text-muted small fw-semibold text-uppercase d-block">Descripción / Especificaciones</label>
+                    <p class="text-dark small mb-0 bg-light p-3 rounded">
+                        @(string.IsNullOrEmpty(Model.Recurso.Descripcion) ? "Sin observaciones técnicas adicionales." : Model.Recurso.Descripcion)
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Recurso.Id" class="btn btn-outline-primary flex-grow-1">
+                        <i class="bi bi-pencil-square me-1"></i> Editar Información
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de requerimientos asociados -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-journal-text text-primary me-2"></i>Historial de Incidencias y Mantenimientos
+                </h5>
+                <span class="badge bg-secondary-subtle text-dark">@Model.SolicitudesRelacionadas.Count tickets</span>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.SolicitudesRelacionadas.Any())
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-check2-all display-4 text-success opacity-50 d-block mb-2"></i>
+                        Este recurso no registra ninguna solicitud o falla reportada.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light text-uppercase text-muted">
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Título</th>
+                                    <th>Prioridad</th>
+                                    <th>Estado</th>
+                                    <th>Solicitante</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sol in Model.SolicitudesRelacionadas)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="Dashboard" asp-action="Detalle" asp-route-id="@sol.Id" class="fw-bold font-monospace text-decoration-none">
+                                                @sol.CodigoTicket
+                                            </a>
+                                        </td>
+                                        <td class="fw-semibold">@sol.Titulo</td>
+                                        <td>
+                                            @switch (sol.Prioridad)
+                                            {
+                                                case PrioridadSolicitud.Urgente:
+                                                    <span class="badge badge-priority-urgente">Urgente</span>
+                                                    break;
+                                                case PrioridadSolicitud.Alta:
+                                                    <span class="badge badge-priority-alta">Alta</span>
+                                                    break;
+                                                case PrioridadSolicitud.Media:
+                                                    <span class="badge badge-priority-media text-dark">Media</span>
+                                                    break;
+                                                case PrioridadSolicitud.Baja:
+                                                    <span class="badge badge-priority-baja">Baja</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>
+                                            @switch (sol.Estado)
+                                            {
+                                                case EstadoSolicitud.Pendiente:
+                                                    <span class="badge badge-status-pendiente">Pendiente</span>
+                                                    break;
+                                                case EstadoSolicitud.EnProceso:
+                                                    <span class="badge badge-status-enproceso">En Proceso</span>
+                                                    break;
+                                                case EstadoSolicitud.Atendida:
+                                                    <span class="badge badge-status-atendida">Atendida</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-secondary">@sol.Estado</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>@(sol.Solicitante?.NombreCompleto ?? "N/A")</td>
+                                        <td class="text-muted">@sol.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

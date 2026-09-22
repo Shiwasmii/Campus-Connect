@@ -1,0 +1,356 @@
+@model CampusConnect.Web.Models.ViewModels.DashboardViewModel
+@using CampusConnect.Web.Models.Enums
+@{
+    ViewData["Title"] = "Dashboard Administrativo";
+}
+
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard Administrativo
+        </h2>
+        <p class="text-muted mb-0">Seguimiento centralizado, priorización de solicitudes y asignación de responsables técnicos.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+        <a asp-controller="Recursos" asp-action="Index" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-hdd-network me-1"></i> Ver Recursos
+        </a>
+        <a asp-controller="Reportes" asp-action="Index" class="btn btn-primary shadow-sm">
+            <i class="bi bi-bar-chart-fill me-1"></i> Ver Reportes
+        </a>
+    </div>
+</div>
+
+<!-- Tarjetas KPI -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase small fw-semibold">Total Solicitudes</span>
+                    <h3 class="fw-bold text-dark mt-1 mb-0">@Model.TotalSolicitudes</h3>
+                </div>
+                <div class="rounded-circle bg-primary-subtle text-primary p-3 fs-4">
+                    <i class="bi bi-inbox-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-4 border-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase small fw-semibold">Pendientes de Atención</span>
+                    <h3 class="fw-bold text-warning mt-1 mb-0">@Model.PendientesCount</h3>
+                </div>
+                <div class="rounded-circle bg-warning-subtle text-warning p-3 fs-4">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-4 border-info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase small fw-semibold">En Proceso</span>
+                    <h3 class="fw-bold text-info mt-1 mb-0">@Model.EnProcesoCount</h3>
+                </div>
+                <div class="rounded-circle bg-info-subtle text-info p-3 fs-4">
+                    <i class="bi bi-gear-wide-connected"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-4 border-danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted text-uppercase small fw-semibold">Urgentes / Críticas</span>
+                    <h3 class="fw-bold text-danger mt-1 mb-0">@Model.UrgentesSinAtenderCount</h3>
+                </div>
+                <div class="rounded-circle bg-danger-subtle text-danger p-3 fs-4">
+                    <i class="bi bi-exclamation-octagon-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros de búsqueda y priorización -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-3">
+        <form method="get" asp-action="Index" class="row g-2 align-items-center">
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="busqueda" value="@Model.Busqueda" class="form-control bg-light border-start-0" 
+                           placeholder="Buscar por ticket, título o solicitante..." />
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <select name="prioridad" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todas las Prioridades</option>
+                    @foreach (PrioridadSolicitud p in Enum.GetValues(typeof(PrioridadSolicitud)))
+                    {
+                        if (Model.PrioridadFiltro == p)
+                        {
+                            <option value="@p" selected>@p</option>
+                        }
+                        else
+                        {
+                            <option value="@p">@p</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <select name="estado" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todos los Estados</option>
+                    @foreach (EstadoSolicitud e in Enum.GetValues(typeof(EstadoSolicitud)))
+                    {
+                        if (Model.EstadoFiltro == e)
+                        {
+                            <option value="@e" selected>@e</option>
+                        }
+                        else
+                        {
+                            <option value="@e">@e</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <select name="categoria" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todas las Categorías</option>
+                    @foreach (CategoriaSolicitud c in Enum.GetValues(typeof(CategoriaSolicitud)))
+                    {
+                        if (Model.CategoriaFiltro == c)
+                        {
+                            <option value="@c" selected>@c</option>
+                        }
+                        else
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-dark w-100"><i class="bi bi-filter"></i> Filtrar</button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Limpiar filtros"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla Centralizada de Solicitudes -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark">
+            <i class="bi bi-list-check text-primary me-2"></i>Bandeja de Requerimientos Priorizados
+            <span class="badge bg-secondary-subtle text-dark ms-2">@Model.Solicitudes.Count</span>
+        </h5>
+        <span class="small text-muted"><i class="bi bi-sort-down me-1"></i>Ordenado por urgencia y fecha</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase text-muted">
+                <tr>
+                    <th scope="col">Ticket / Fecha</th>
+                    <th scope="col">Asunto / Solicitante</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col">Prioridad</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Responsable Asignado</th>
+                    <th scope="col" class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Solicitudes.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-folder2-open display-4 d-block mb-2 text-secondary opacity-50"></i>
+                            No se encontraron solicitudes con los criterios de filtro especificados.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Solicitudes)
+                    {
+                        <tr class="@(item.Prioridad == PrioridadSolicitud.Urgente && item.Estado == EstadoSolicitud.Pendiente ? "table-danger" : "")">
+                            <td>
+                                <strong class="text-primary font-monospace">@item.CodigoTicket</strong>
+                                <div class="text-muted small">@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">@item.Titulo</div>
+                                <div class="small text-muted">
+                                    <i class="bi bi-person me-1"></i>@item.SolicitanteNombre
+                                    @if (!string.IsNullOrEmpty(item.RecursoCodigo))
+                                    {
+                                        <span class="ms-2 badge bg-light text-secondary border">
+                                            <i class="bi bi-hdd-fill me-1 text-primary"></i>@item.RecursoCodigo
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @switch (item.Categoria)
+                                {
+                                    case CategoriaSolicitud.Mantenimiento:
+                                        <span class="badge bg-secondary"><i class="bi bi-tools me-1"></i>Mantenimiento</span>
+                                        break;
+                                    case CategoriaSolicitud.SoporteTecnologico:
+                                        <span class="badge bg-primary"><i class="bi bi-laptop me-1"></i>Soporte TI</span>
+                                        break;
+                                    case CategoriaSolicitud.Infraestructura:
+                                        <span class="badge bg-info text-dark"><i class="bi bi-building me-1"></i>Infraestructura</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @switch (item.Prioridad)
+                                {
+                                    case PrioridadSolicitud.Urgente:
+                                        <span class="badge badge-priority-urgente px-2 py-1"><i class="bi bi-fire me-1"></i>Urgente</span>
+                                        break;
+                                    case PrioridadSolicitud.Alta:
+                                        <span class="badge badge-priority-alta px-2 py-1">Alta</span>
+                                        break;
+                                    case PrioridadSolicitud.Media:
+                                        <span class="badge badge-priority-media px-2 py-1 text-dark">Media</span>
+                                        break;
+                                    case PrioridadSolicitud.Baja:
+                                        <span class="badge badge-priority-baja px-2 py-1">Baja</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @switch (item.Estado)
+                                {
+                                    case EstadoSolicitud.Pendiente:
+                                        <span class="badge badge-status-pendiente px-2 py-1"><i class="bi bi-hourglass-split me-1"></i>Pendiente</span>
+                                        break;
+                                    case EstadoSolicitud.EnProceso:
+                                        <span class="badge badge-status-enproceso px-2 py-1"><i class="bi bi-arrow-repeat me-1"></i>En Proceso</span>
+                                        break;
+                                    case EstadoSolicitud.Atendida:
+                                        <span class="badge badge-status-atendida px-2 py-1"><i class="bi bi-check2-circle me-1"></i>Atendida</span>
+                                        break;
+                                    case EstadoSolicitud.Cancelada:
+                                        <span class="badge badge-status-cancelada px-2 py-1">Cancelada</span>
+                                        break;
+                                    case EstadoSolicitud.Rechazada:
+                                        <span class="badge badge-status-rechazada px-2 py-1">Rechazada</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @if (item.AsignadoAId.HasValue)
+                                {
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="bi bi-person-check-fill text-success"></i>
+                                        <span class="small fw-semibold">@item.AsignadoANombre</span>
+                                    </div>
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-muted small" 
+                                            data-bs-toggle="modal" data-bs-target="#asignarModal-@item.Id">
+                                        (Reasignar)
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" 
+                                            data-bs-toggle="modal" data-bs-target="#asignarModal-@item.Id">
+                                        <i class="bi bi-person-plus-fill me-1"></i> Asignar
+                                    </button>
+                                }
+
+                                <!-- Modal de Asignación de Responsable -->
+                                <div class="modal fade" id="asignarModal-@item.Id" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form method="post" asp-action="AsignarResponsable">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="solicitudId" value="@item.Id" />
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold">
+                                                        <i class="bi bi-person-gear text-primary me-2"></i>Asignar Responsable
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body text-start">
+                                                    <p class="mb-2"><strong>Ticket:</strong> @item.CodigoTicket - @item.Titulo</p>
+                                                    <p class="text-muted small mb-3">Selecciona el miembro del equipo técnico o administrativo responsable de atender este requerimiento:</p>
+                                                    <label class="form-label fw-semibold">Personal de Soporte:</label>
+                                                    <select name="responsableId" class="form-select" required>
+                                                        <option value="">-- Seleccionar Responsable --</option>
+                                                        @foreach (var resp in Model.PersonalSoporteList)
+                                                        {
+                                                            if (item.AsignadoAId.HasValue && item.AsignadoAId.Value.ToString() == resp.Value)
+                                                            {
+                                                                <option value="@resp.Value" selected>@resp.Text</option>
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="@resp.Value">@resp.Text</option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Confirmar Asignación</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a asp-action="Detalle" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Ver Detalles y Seguimiento">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" 
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                        <li><h6 class="dropdown-header">Cambiar Estado</h6></li>
+                                        <li>
+                                            <form method="post" asp-action="CambiarEstado">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="solicitudId" value="@item.Id" />
+                                                <input type="hidden" name="nuevoEstado" value="@EstadoSolicitud.EnProceso" />
+                                                <button type="submit" class="dropdown-item text-primary"><i class="bi bi-play-circle me-2"></i>Marcar En Proceso</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="post" asp-action="CambiarEstado">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="solicitudId" value="@item.Id" />
+                                                <input type="hidden" name="nuevoEstado" value="@EstadoSolicitud.Atendida" />
+                                                <button type="submit" class="dropdown-item text-success"><i class="bi bi-check2-circle me-2"></i>Marcar Atendida / Resuelta</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="post" asp-action="CambiarEstado">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="solicitudId" value="@item.Id" />
+                                                <input type="hidden" name="nuevoEstado" value="@EstadoSolicitud.Rechazada" />
+                                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-x-circle me-2"></i>Rechazar Solicitud</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

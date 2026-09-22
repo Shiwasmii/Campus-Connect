@@ -1,0 +1,234 @@
+@model CampusConnect.Web.Models.Entities.Solicitud
+@using CampusConnect.Web.Models.Enums
+@{
+    ViewData["Title"] = $"Detalle Ticket {Model.CodigoTicket}";
+    var personalSoporte = ViewBag.PersonalSoporte as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Volver al Dashboard
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Columna Principal: Datos de la Solicitud y Comentarios -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-secondary font-monospace me-2">@Model.CodigoTicket</span>
+                    <span class="text-muted small">Registrado el @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+                <div>
+                    @switch (Model.Prioridad)
+                    {
+                        case PrioridadSolicitud.Urgente:
+                            <span class="badge badge-priority-urgente px-3 py-1 fs-6"><i class="bi bi-fire me-1"></i>Urgente</span>
+                            break;
+                        case PrioridadSolicitud.Alta:
+                            <span class="badge badge-priority-alta px-3 py-1 fs-6">Alta</span>
+                            break;
+                        case PrioridadSolicitud.Media:
+                            <span class="badge badge-priority-media px-3 py-1 fs-6 text-dark">Media</span>
+                            break;
+                        case PrioridadSolicitud.Baja:
+                            <span class="badge badge-priority-baja px-3 py-1 fs-6">Baja</span>
+                            break;
+                    }
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <h3 class="fw-bold text-dark mb-3">@Model.Titulo</h3>
+                <div class="p-3 bg-light rounded-3 mb-4 border">
+                    <h6 class="fw-semibold text-uppercase text-muted small mb-2">Descripción del problema o requerimiento:</h6>
+                    <p class="mb-0 text-dark" style="white-space: pre-line;">@Model.Descripcion</p>
+                </div>
+
+                <!-- Evidencias adjuntas -->
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-paperclip text-primary me-2"></i>Evidencias Adjuntas (@Model.Evidencias.Count)
+                </h5>
+                @if (!Model.Evidencias.Any())
+                {
+                    <p class="text-muted small italic">No se han adjuntado evidencias fotográficas o documentales a este ticket.</p>
+                }
+                else
+                {
+                    <div class="row g-2 mb-4">
+                        @foreach (var ev in Model.Evidencias)
+                        {
+                            <div class="col-sm-6">
+                                <div class="card border h-100 p-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded bg-light p-2 text-primary fs-4">
+                                            <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <a href="@ev.RutaRelativa" target="_blank" class="fw-semibold text-truncate d-block small text-decoration-none">
+                                                @ev.NombreArchivoOriginal
+                                            </a>
+                                            <span class="text-muted small">@((ev.TamanoBytes / 1024.0).ToString("N1")) KB &bull; @ev.FechaSubida.ToString("dd/MM/yyyy")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <hr class="my-4" />
+
+                <!-- Bitácora de Comentarios y Trazabilidad -->
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-chat-left-dots text-primary me-2"></i>Bitácora de Seguimiento (@Model.Comentarios.Count)
+                </h5>
+
+                @if (!Model.Comentarios.Any())
+                {
+                    <p class="text-muted small italic">No hay comentarios registrados en la bitácora aún.</p>
+                }
+                else
+                {
+                    <div class="timeline mb-4">
+                        @foreach (var com in Model.Comentarios.OrderBy(c => c.FechaCreacion))
+                        {
+                            <div class="card mb-2 border-0 bg-light p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-dark small">
+                                        <i class="bi bi-person-circle me-1"></i>@(com.Usuario?.NombreCompleto ?? "Sistema")
+                                        <span class="badge bg-secondary-subtle text-secondary small ms-1">@(com.Usuario?.Rol.ToString() ?? "Auditoría")</span>
+                                    </strong>
+                                    <span class="text-muted small">@com.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                                <p class="mb-0 text-dark small" style="white-space: pre-line;">@com.Mensaje</p>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Agregar Comentario -->
+                <form method="post" asp-action="CambiarEstado" class="mt-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="solicitudId" value="@Model.Id" />
+                    <input type="hidden" name="nuevoEstado" value="@Model.Estado" />
+                    <label class="form-label fw-semibold small">Agregar nota o comentario a la bitácora:</label>
+                    <div class="input-group">
+                        <textarea name="nota" class="form-control" rows="2" placeholder="Escribe un comentario para el historial..." required></textarea>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill me-1"></i> Enviar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Lateral: Estado y Asignación -->
+    <div class="col-lg-4">
+        <!-- Tarjeta de Estado y Asignación -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>Gestión de Ticket</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small fw-semibold text-uppercase d-block mb-1">Estado Actual</label>
+                    @switch (Model.Estado)
+                    {
+                        case EstadoSolicitud.Pendiente:
+                            <span class="badge badge-status-pendiente px-3 py-2 fs-6 w-100 text-center"><i class="bi bi-hourglass-split me-1"></i>Pendiente de Atención</span>
+                            break;
+                        case EstadoSolicitud.EnProceso:
+                            <span class="badge badge-status-enproceso px-3 py-2 fs-6 w-100 text-center"><i class="bi bi-arrow-repeat me-1"></i>En Proceso</span>
+                            break;
+                        case EstadoSolicitud.Atendida:
+                            <span class="badge badge-status-atendida px-3 py-2 fs-6 w-100 text-center"><i class="bi bi-check2-circle me-1"></i>Atendida / Resuelta</span>
+                            break;
+                        case EstadoSolicitud.Cancelada:
+                            <span class="badge badge-status-cancelada px-3 py-2 fs-6 w-100 text-center">Cancelada</span>
+                            break;
+                        case EstadoSolicitud.Rechazada:
+                            <span class="badge badge-status-rechazada px-3 py-2 fs-6 w-100 text-center">Rechazada</span>
+                            break;
+                    }
+                </div>
+
+                <!-- Cambiar Estado -->
+                <form method="post" asp-action="CambiarEstado" class="mb-4">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="solicitudId" value="@Model.Id" />
+                    <label class="form-label small fw-semibold">Actualizar Estado:</label>
+                    <div class="input-group mb-2">
+                        <select name="nuevoEstado" class="form-select form-select-sm">
+                            @foreach (EstadoSolicitud est in Enum.GetValues(typeof(EstadoSolicitud)))
+                            {
+                                if (Model.Estado == est)
+                                {
+                                    <option value="@est" selected>@est</option>
+                                }
+                                else
+                                {
+                                    <option value="@est">@est</option>
+                                }
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-dark">Actualizar</button>
+                    </div>
+                </form>
+
+                <hr />
+
+                <!-- Asignar Responsable -->
+                <form method="post" asp-action="AsignarResponsable">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="solicitudId" value="@Model.Id" />
+                    <label class="form-label small fw-semibold">Responsable Técnico:</label>
+                    <div class="mb-2">
+                        <select name="responsableId" class="form-select form-select-sm" required>
+                            <option value="">-- Seleccionar --</option>
+                            @foreach (var resp in personalSoporte)
+                            {
+                                if (Model.AsignadoAId.HasValue && Model.AsignadoAId.Value.ToString() == resp.Value)
+                                {
+                                    <option value="@resp.Value" selected>@resp.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@resp.Value">@resp.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                        <i class="bi bi-person-check-fill me-1"></i> Asignar / Guardar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tarjeta de Solicitante y Recurso -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-info-circle me-2 text-primary"></i>Información Contextual</h6>
+            </div>
+            <div class="card-body small">
+                <div class="mb-3">
+                    <span class="text-muted fw-semibold d-block">Solicitante:</span>
+                    <div class="fw-bold text-dark">@(Model.Solicitante?.NombreCompleto ?? "No especificado")</div>
+                    <div class="text-muted">@(Model.Solicitante?.Correo ?? "")</div>
+                    <div class="text-muted">@(Model.Solicitante?.CarreraODepartamento ?? "")</div>
+                </div>
+
+                @if (Model.Recurso != null)
+                {
+                    <hr />
+                    <div>
+                        <span class="text-muted fw-semibold d-block">Recurso Afectado:</span>
+                        <div class="fw-bold text-dark">@Model.Recurso.Codigo - @Model.Recurso.Nombre</div>
+                        <div class="text-muted"><i class="bi bi-geo-alt me-1"></i>@Model.Recurso.Ubicacion</div>
+                        <span class="badge bg-secondary-subtle text-secondary border mt-1">@Model.Recurso.Tipo</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

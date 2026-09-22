@@ -1,0 +1,234 @@
+@model CampusConnect.Web.Models.ViewModels.ReportesViewModel
+@{
+    ViewData["Title"] = "Módulo de Reportes e Indicadores";
+}
+
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-graph-up-arrow text-primary me-2"></i>Módulo de Reportes e Indicadores
+        </h2>
+        <p class="text-muted mb-0">Métricas consolidadas de solicitudes universitarias, tiempos de atención, prioridades y rendimiento.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+        <a asp-action="ExportarCsv" class="btn btn-success shadow-sm">
+            <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar a CSV
+        </a>
+    </div>
+</div>
+
+<!-- Resumen Ejecutivo (KPIs) -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-4 border-primary">
+            <span class="text-muted text-uppercase small fw-semibold">Solicitudes Recibidas</span>
+            <h3 class="fw-bold text-dark mt-1 mb-1">@Model.TotalSolicitudes</h3>
+            <span class="small text-muted">Total histórico acumulado</span>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-4 border-warning">
+            <span class="text-muted text-uppercase small fw-semibold">Pendientes de Atención</span>
+            <h3 class="fw-bold text-warning mt-1 mb-1">@Model.PendientesCount</h3>
+            <span class="small text-muted">En cola sin atender</span>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-success">
+            <span class="text-muted text-uppercase small fw-semibold">Cerradas / Atendidas</span>
+            <h3 class="fw-bold text-success mt-1 mb-1">@Model.AtendidasCount</h3>
+            <span class="small text-success fw-semibold">@Model.TasaResolucionPorcentaje% Tasa de resolución</span>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card kpi-card bg-white p-3 h-100 border-start border-4 border-info">
+            <span class="text-muted text-uppercase small fw-semibold">Tiempo Prom. de Atención</span>
+            <h3 class="fw-bold text-info mt-1 mb-1">@Model.TiempoPromedioAtencionHoras <span class="fs-6 fw-normal text-muted">hrs</span></h3>
+            <span class="small text-muted">Desde reporte hasta cierre</span>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos de Distribución (Chart.js) -->
+<div class="row g-4 mb-4">
+    <!-- Gráfico por Categoría -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-pie-chart-fill text-primary me-2"></i>Distribución por Tipo / Categoría
+                </h5>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4">
+                <div style="width: 100%; max-width: 320px; height: 260px;">
+                    <canvas id="categoriaChart"></canvas>
+                </div>
+                <div class="w-100 mt-3">
+                    <table class="table table-sm table-borderless mb-0 small">
+                        <tbody>
+                            @foreach (var cat in Model.PorCategoria)
+                            {
+                                <tr>
+                                    <td><i class="bi bi-circle-fill me-1" style="color: @(cat.Nombre == "Mantenimiento" ? "#64748b" : cat.Nombre == "Soporte Tecnológico" ? "#3b82f6" : "#06b6d4")"></i>@cat.Nombre</td>
+                                    <td class="text-end fw-bold">@cat.Cantidad</td>
+                                    <td class="text-end text-muted">@cat.Porcentaje%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico por Prioridad -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-bar-chart-fill text-danger me-2"></i>Distribución por Nivel de Prioridad
+                </h5>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4">
+                <div style="width: 100%; height: 260px;">
+                    <canvas id="prioridadChart"></canvas>
+                </div>
+                <div class="w-100 mt-3">
+                    <table class="table table-sm table-borderless mb-0 small">
+                        <tbody>
+                            @foreach (var pri in Model.PorPrioridad)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge @(pri.Nombre == "Urgente" ? "badge-priority-urgente" : pri.Nombre == "Alta" ? "badge-priority-alta" : pri.Nombre == "Media" ? "badge-priority-media text-dark" : "badge-priority-baja") me-1">
+                                            @pri.Nombre
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold">@pri.Cantidad</td>
+                                    <td class="text-end text-muted">@pri.Porcentaje%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Rendimiento por Responsable Técnico -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-people-fill text-success me-2"></i>Seguimiento y Carga de Trabajo por Responsable
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase text-muted">
+                <tr>
+                    <th>Responsable</th>
+                    <th>Rol / Departamento</th>
+                    <th class="text-center">Asignadas</th>
+                    <th class="text-center">Atendidas / Resueltas</th>
+                    <th class="text-center">Pendientes / En Curso</th>
+                    <th>Tasa de Efectividad</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.PorResponsable.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No hay personal asignado registrado aún.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var resp in Model.PorResponsable)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@resp.NombreCompleto</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border">@resp.Rol</span>
+                            </td>
+                            <td class="text-center fw-bold">@resp.TotalAsignadas</td>
+                            <td class="text-center text-success fw-bold">@resp.Atendidas</td>
+                            <td class="text-center text-warning fw-bold">@resp.PendientesOEnProceso</td>
+                            <td style="min-width: 180px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: @(resp.EficienciaPorcentaje)%" 
+                                             aria-valuenow="@resp.EficienciaPorcentaje" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="small fw-semibold text-muted">@resp.EficienciaPorcentaje%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Datos para Gráfico de Categorías (Doughnut)
+        const categoriaData = {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorCategoria.Select(c => c.Nombre))),
+            datasets: [{
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorCategoria.Select(c => c.Cantidad))),
+                backgroundColor: ['#64748b', '#3b82f6', '#06b6d4'],
+                hoverOffset: 4
+            }]
+        };
+
+        const ctxCat = document.getElementById('categoriaChart').getContext('2d');
+        new Chart(ctxCat, {
+            type: 'doughnut',
+            data: categoriaData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Datos para Gráfico de Prioridad (Bar)
+        const prioridadData = {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorPrioridad.Select(p => p.Nombre))),
+            datasets: [{
+                label: 'Cantidad de Solicitudes',
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PorPrioridad.Select(p => p.Cantidad))),
+                backgroundColor: ['#64748b', '#f59e0b', '#f97316', '#ef4444'],
+                borderRadius: 6
+            }]
+        };
+
+        const ctxPri = document.getElementById('prioridadChart').getContext('2d');
+        new Chart(ctxPri, {
+            type: 'bar',
+            data: prioridadData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    </script>
+}

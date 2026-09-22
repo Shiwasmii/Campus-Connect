@@ -1,0 +1,14 @@
+## Ignore Visual Studio / .NET temporary and build files
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+.vscode/
+
+## Uploads físicos temporales
+wwwroot/uploads/evidencias/*
+!wwwroot/uploads/evidencias/.gitkeep

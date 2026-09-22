@@ -1,0 +1,79 @@
+@model CampusConnect.Web.Models.ViewModels.RecursoFormViewModel
+@using CampusConnect.Web.Models.Enums
+@{
+    ViewData["Title"] = "Registrar Nuevo Recurso";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="mb-3">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Volver al Listado
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-plus-circle text-primary me-2"></i>Registrar Nuevo Recurso Universitario
+                </h4>
+                <p class="text-muted small mb-0">Ingresa los datos técnicos del equipo o infraestructura física para su monitoreo.</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" asp-action="Create">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3" role="alert"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Codigo" class="form-label fw-semibold"></label>
+                            <input asp-for="Codigo" class="form-control" placeholder="Ej. LAB-02-PC10 o AULA-101-CLIMA" required />
+                            <span asp-validation-for="Codigo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Tipo" class="form-label fw-semibold"></label>
+                            <select asp-for="Tipo" class="form-select" asp-items="Html.GetEnumSelectList<TipoRecurso>()"></select>
+                            <span asp-validation-for="Tipo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label asp-for="Nombre" class="form-label fw-semibold"></label>
+                            <input asp-for="Nombre" class="form-control" placeholder="Ej. Computadora de Escritorio HP o Proyector Multimedia" required />
+                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Ubicacion" class="form-label fw-semibold"></label>
+                            <input asp-for="Ubicacion" class="form-control" placeholder="Ej. Edificio B - Laboratorio 3" required />
+                            <span asp-validation-for="Ubicacion" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Estado" class="form-label fw-semibold"></label>
+                            <select asp-for="Estado" class="form-select" asp-items="Html.GetEnumSelectList<EstadoRecurso>()"></select>
+                            <span asp-validation-for="Estado" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Descripcion" class="form-label fw-semibold"></label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="3" placeholder="Detalles de hardware, especificaciones o condiciones físicas..."></textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save me-1"></i> Guardar Recurso
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
