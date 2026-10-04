@@ -40,8 +40,8 @@ class ApiConfig {
   }
 
   static Uri solicitudesPorSolicitante(int solicitanteId) {
-    return Uri.parse('$baseUrl/api/SolicitudesApi').replace(
-      queryParameters: {'solicitanteId': '$solicitanteId'},
-    );
+    return Uri.parse(
+      '$baseUrl/api/SolicitudesApi',
+    ).replace(queryParameters: {'solicitanteId': '$solicitanteId'});
   }
 }

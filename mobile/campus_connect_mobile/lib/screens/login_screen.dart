@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../storage/session_storage.dart';
+import '../widgets/app_section.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -51,7 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
 
-    if (!resultado.exitoso || resultado.usuario == null || resultado.token == null) {
+    if (!resultado.exitoso ||
+        resultado.usuario == null ||
+        resultado.token == null) {
       setState(() {
         _cargando = false;
         _errorApi = resultado.mensaje;
@@ -95,120 +98,144 @@ class _LoginScreenState extends State<LoginScreen> {
     final colores = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(Icons.school_outlined, size: 56, color: colores.primary),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Campus Connect',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colores.primary,
-                    ),
+      body: AppFrame(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 64).clamp(
+                    0,
+                    double.infinity,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Inicia sesión para ver tus solicitudes',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: colores.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Card(
-                    elevation: 0,
-                    color: colores.surfaceContainerLowest,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: colores.outlineVariant),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextFormField(
-                              controller: _correoController,
-                              keyboardType: TextInputType.emailAddress,
-                              autofillHints: const [AutofillHints.email],
-                              textInputAction: TextInputAction.next,
-                              enabled: !_cargando,
-                              decoration: const InputDecoration(
-                                labelText: 'Correo',
-                                prefixIcon: Icon(Icons.mail_outline),
-                              ),
-                              validator: _validarCorreo,
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _ocultarPassword,
-                              autofillHints: const [AutofillHints.password],
-                              textInputAction: TextInputAction.done,
-                              enabled: !_cargando,
-                              onFieldSubmitted: (_) => _iniciarSesion(),
-                              decoration: InputDecoration(
-                                labelText: 'Contraseña',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(
-                                  onPressed: _cargando
-                                      ? null
-                                      : () {
-                                          setState(() {
-                                            _ocultarPassword = !_ocultarPassword;
-                                          });
-                                        },
-                                  icon: Icon(
-                                    _ocultarPassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                  ),
-                                ),
-                              ),
-                              validator: _validarPassword,
-                            ),
-                            if (_errorApi != null) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                _errorApi!,
-                                style: TextStyle(color: colores.error),
-                              ),
-                            ],
-                            const SizedBox(height: 24),
-                            FilledButton(
-                              onPressed: _cargando ? null : _iniciarSesion,
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                              ),
-                              child: _cargando
-                                  ? const SizedBox(
-                                      height: 22,
-                                      width: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Iniciar sesión'),
-                            ),
-                          ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          color: colores.primaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.school_outlined,
+                          size: 42,
+                          color: colores.onPrimaryContainer,
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    Text(
+                      'Campus Connect',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Inicia sesión para ver tus solicitudes',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: colores.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextFormField(
+                                controller: _correoController,
+                                keyboardType: TextInputType.emailAddress,
+                                autofillHints: const [AutofillHints.email],
+                                textInputAction: TextInputAction.next,
+                                enabled: !_cargando,
+                                decoration: const InputDecoration(
+                                  labelText: 'Correo',
+                                  prefixIcon: Icon(Icons.mail_outline),
+                                ),
+                                validator: _validarCorreo,
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _ocultarPassword,
+                                autofillHints: const [AutofillHints.password],
+                                textInputAction: TextInputAction.done,
+                                enabled: !_cargando,
+                                onFieldSubmitted: (_) => _iniciarSesion(),
+                                decoration: InputDecoration(
+                                  labelText: 'Contraseña',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  suffixIcon: IconButton(
+                                    tooltip: _ocultarPassword
+                                        ? 'Mostrar contraseña'
+                                        : 'Ocultar contraseña',
+                                    onPressed: _cargando
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _ocultarPassword =
+                                                  !_ocultarPassword;
+                                            });
+                                          },
+                                    icon: Icon(
+                                      _ocultarPassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                    ),
+                                  ),
+                                ),
+                                validator: _validarPassword,
+                              ),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: _errorApi == null
+                                    ? const SizedBox(width: double.infinity)
+                                    : Padding(
+                                        padding: const EdgeInsets.only(top: 16),
+                                        child: Text(
+                                          _errorApi!,
+                                          key: ValueKey(_errorApi),
+                                          style: TextStyle(
+                                            color: colores.error,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                              const SizedBox(height: 24),
+                              FilledButton(
+                                onPressed: _cargando ? null : _iniciarSesion,
+                                child: _cargando
+                                    ? SizedBox(
+                                        height: 22,
+                                        width: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: colores.onPrimary,
+                                        ),
+                                      )
+                                    : const Text('Iniciar sesión'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

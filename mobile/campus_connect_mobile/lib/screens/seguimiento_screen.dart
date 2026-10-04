@@ -8,6 +8,12 @@ import '../models/solicitud.dart';
 import '../services/solicitudes_service.dart';
 import '../storage/session_storage.dart';
 import '../utils/nombre_visible.dart';
+import '../widgets/activity_timeline.dart';
+import '../widgets/app_empty_state.dart';
+import '../widgets/app_error_state.dart';
+import '../widgets/app_loading.dart';
+import '../widgets/app_notice.dart';
+import '../widgets/app_section.dart';
 import '../widgets/estado_chip.dart';
 import '../widgets/prioridad_chip.dart';
 
@@ -79,9 +85,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       }
       if (_seguimiento != null) {
         setState(() => _cargando = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.mensaje)),
-        );
+        mostrarAviso(context, error.mensaje, esError: true);
         return;
       }
       setState(() {
@@ -119,7 +123,8 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       if (usuario == null) {
         setState(() {
           _enviandoComentario = false;
-          _errorComentario = 'No hay una sesión activa. Vuelve a iniciar sesión.';
+          _errorComentario =
+              'No hay una sesión activa. Vuelve a iniciar sesión.';
         });
         return;
       }
@@ -150,14 +155,24 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     }
   }
 
+  String get _vista {
+    if (_cargando && _seguimiento == null) return 'cargando';
+    if (_error != null && _seguimiento == null) return 'error';
+    if (_seguimiento == null) return 'vacio';
+    return 'detalle';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Seguimiento')),
-      body: SafeArea(
+      body: AppFrame(
         child: RefreshIndicator(
           onRefresh: _cargar,
-          child: _contenido(),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: KeyedSubtree(key: ValueKey(_vista), child: _contenido()),
+          ),
         ),
       ),
     );
@@ -166,110 +181,122 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   Widget _contenido() {
     final seguimiento = _seguimiento;
     if (_cargando && seguimiento == null) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 80),
-          Center(child: CircularProgressIndicator()),
-          SizedBox(height: 16),
-          Center(child: Text('Cargando seguimiento...')),
-        ],
-      );
+      return const AppLoading(mensaje: 'Cargando seguimiento...');
     }
 
     if (_error != null && seguimiento == null) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        children: [
-          const SizedBox(height: 48),
-          const Icon(Icons.cloud_off_outlined, size: 48),
-          const SizedBox(height: 12),
-          Text(
-            _error!,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: FilledButton(
-              onPressed: _cargar,
-              child: const Text('Reintentar'),
-            ),
-          ),
-        ],
-      );
+      return AppErrorState(mensaje: _error!, onRetry: _cargar);
     }
 
     if (seguimiento == null) {
-      return const SizedBox.shrink();
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [SizedBox.shrink()],
+      );
     }
+
+    final comentarios = seguimiento.comentariosPublicos;
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
         _DetalleSolicitud(seguimiento: seguimiento),
-        const SizedBox(height: 28),
-        Text('Actividad', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        if (seguimiento.comentariosPublicos.isEmpty)
-          const Text('Aún no hay actualizaciones')
-        else
-          for (final comentario in seguimiento.comentariosPublicos) ...[
-            _ComentarioCard(comentario: comentario),
-            const SizedBox(height: 12),
-          ],
-        const SizedBox(height: 8),
-        Text(
-          'Agregar comentario',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('campo-comentario'),
-          controller: _comentarioController,
-          enabled: !_enviandoComentario,
-          minLines: 2,
-          maxLines: 4,
-          textInputAction: TextInputAction.newline,
-          decoration: const InputDecoration(
-            hintText: 'Escribe una actualización...',
-            alignLabelWithHint: true,
-          ),
-        ),
-        if (_errorComentario != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _errorComentario!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        ],
-        const SizedBox(height: 12),
-        FilledButton(
-          key: const Key('boton-enviar-comentario'),
-          onPressed: _enviandoComentario ? null : _enviarComentario,
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-          ),
-          child: _enviandoComentario
-              ? const SizedBox(
-                  height: 22,
-                  width: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+        const SizedBox(height: 24),
+        AppSection(
+          titulo: 'Actividad',
+          icono: Icons.forum_outlined,
+          child: comentarios.isEmpty
+              ? const AppEmptyState(
+                  compacto: true,
+                  icono: Icons.chat_bubble_outline,
+                  titulo: 'Aún no hay actualizaciones',
+                  mensaje: 'Los comentarios públicos aparecerán aquí.',
                 )
-              : const Text('Enviar comentario'),
+              : ActivityTimeline(
+                  items: [
+                    for (final comentario in comentarios)
+                      _ComentarioCard(comentario: comentario),
+                  ],
+                ),
         ),
-        const SizedBox(height: 28),
-        Text('Evidencias', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        if (seguimiento.evidencias.isEmpty)
-          const Text('Sin evidencias adjuntas')
-        else
-          for (final evidencia in seguimiento.evidencias) ...[
-            _EvidenciaCard(evidencia: evidencia),
-            const SizedBox(height: 12),
-          ],
+        const SizedBox(height: 24),
+        AppSection(
+          titulo: 'Agregar comentario',
+          icono: Icons.add_comment_outlined,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    key: const Key('campo-comentario'),
+                    controller: _comentarioController,
+                    enabled: !_enviandoComentario,
+                    minLines: 3,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.newline,
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe una actualización...',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: _errorComentario == null
+                        ? const SizedBox(width: double.infinity)
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              _errorComentario!,
+                              key: ValueKey(_errorComentario),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    key: const Key('boton-enviar-comentario'),
+                    onPressed: _enviandoComentario ? null : _enviarComentario,
+                    child: _enviandoComentario
+                        ? SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          )
+                        : const Text('Enviar comentario'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        AppSection(
+          titulo: 'Evidencias',
+          icono: Icons.attach_file,
+          child: seguimiento.evidencias.isEmpty
+              ? const AppEmptyState(
+                  compacto: true,
+                  icono: Icons.image_outlined,
+                  titulo: 'Sin evidencias adjuntas',
+                  mensaje: 'Las fotos de la solicitud se mostrarán aquí.',
+                )
+              : Column(
+                  children: [
+                    for (final evidencia in seguimiento.evidencias) ...[
+                      _EvidenciaCard(evidencia: evidencia),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                ),
+        ),
       ],
     );
   }
@@ -284,69 +311,99 @@ class _DetalleSolicitud extends StatelessWidget {
   Widget build(BuildContext context) {
     final colores = Theme.of(context).colorScheme;
     final recurso = seguimiento.recurso;
+    final responsable = nombreVisible(seguimiento.responsableVisible);
+    final asignado = seguimiento.tieneResponsable;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          seguimiento.codigoTicket,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: colores.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          seguimiento.titulo,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            EstadoChip(estado: seguimiento.estado),
-            PrioridadChip(prioridad: seguimiento.prioridad),
+            Text(
+              seguimiento.codigoTicket,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colores.onSurfaceVariant),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              seguimiento.titulo,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EstadoChip(estado: seguimiento.estado),
+                PrioridadChip(prioridad: seguimiento.prioridad),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              seguimiento.categoriaVisible,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: colores.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              seguimiento.descripcion,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 12),
+            _Dato(
+              icono: Icons.calendar_today_outlined,
+              texto: 'Creada: ${formatearFecha(seguimiento.fechaCreacion)}',
+            ),
+            if (seguimiento.fechaActualizacion != null) ...[
+              const SizedBox(height: 8),
+              _Dato(
+                icono: Icons.update,
+                texto:
+                    'Actualizada: ${formatearFecha(seguimiento.fechaActualizacion!)}',
+              ),
+            ],
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: asignado
+                      ? colores.primaryContainer
+                      : colores.surfaceContainerHighest,
+                  foregroundColor: asignado
+                      ? colores.onPrimaryContainer
+                      : colores.onSurfaceVariant,
+                  child: asignado
+                      ? Text(
+                          responsable.isEmpty
+                              ? '?'
+                              : responsable[0].toUpperCase(),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        )
+                      : const Icon(Icons.person_outline, size: 18),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Responsable: $responsable')),
+              ],
+            ),
+            if (recurso != null && recurso.visible.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _Dato(
+                icono: Icons.inventory_2_outlined,
+                texto: 'Recurso: ${recurso.visible}',
+              ),
+            ],
           ],
         ),
-        const SizedBox(height: 12),
-        Text(
-          seguimiento.categoriaVisible,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: colores.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(seguimiento.descripcion),
-        const SizedBox(height: 16),
-        _Dato(
-          icono: Icons.calendar_today_outlined,
-          texto: 'Creada: ${formatearFecha(seguimiento.fechaCreacion)}',
-        ),
-        if (seguimiento.fechaActualizacion != null) ...[
-          const SizedBox(height: 8),
-          _Dato(
-            icono: Icons.update,
-            texto:
-                'Actualizada: ${formatearFecha(seguimiento.fechaActualizacion!)}',
-          ),
-        ],
-        const SizedBox(height: 8),
-        _Dato(
-          icono: Icons.person_outline,
-          texto:
-              'Responsable: ${nombreVisible(seguimiento.responsableVisible)}',
-        ),
-        if (recurso != null && recurso.visible.trim().isNotEmpty) ...[
-          const SizedBox(height: 8),
-          _Dato(
-            icono: Icons.inventory_2_outlined,
-            texto: 'Recurso: ${recurso.visible}',
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
@@ -380,12 +437,6 @@ class _ComentarioCard extends StatelessWidget {
     final colores = Theme.of(context).colorScheme;
 
     return Card(
-      elevation: 0,
-      color: colores.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colores.outlineVariant),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -393,12 +444,14 @@ class _ComentarioCard extends StatelessWidget {
           children: [
             Text(
               nombreVisible(comentario.usuarioNombre),
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             if (comentario.usuarioRol.trim().isNotEmpty)
               Text(
                 comentario.usuarioRol,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colores.onSurfaceVariant,
                 ),
               ),
@@ -407,9 +460,9 @@ class _ComentarioCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               formatearFecha(comentario.fechaCreacion),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colores.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: colores.onSurfaceVariant),
             ),
           ],
         ),
@@ -429,12 +482,6 @@ class _EvidenciaCard extends StatelessWidget {
     final url = ApiConfig.resolverUrl(evidencia.urlDescarga);
 
     return Card(
-      elevation: 0,
-      color: colores.surfaceContainerLowest,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colores.outlineVariant),
-      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(

@@ -38,12 +38,7 @@ class SessionStorage {
       return null;
     }
 
-    return Usuario(
-      id: id,
-      nombreCompleto: nombre,
-      correo: correo,
-      rol: rol,
-    );
+    return Usuario(id: id, nombreCompleto: nombre, correo: correo, rol: rol);
   }
 
   Future<void> cerrarSesion() async {

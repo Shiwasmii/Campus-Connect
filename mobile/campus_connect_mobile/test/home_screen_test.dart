@@ -51,10 +51,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(
-          usuario: _usuario,
-          solicitudesService: servicio,
-        ),
+        home: HomeScreen(usuario: _usuario, solicitudesService: servicio),
       ),
     );
     await tester.pumpAndSettle();
@@ -63,7 +60,7 @@ void main() {
     expect(find.text('TKT-202603-0001'), findsOneWidget);
     expect(find.text('Proyector de la sala 2'), findsOneWidget);
     expect(find.text('Soporte tecnológico'), findsOneWidget);
-    expect(find.text('En proceso'), findsOneWidget);
+    expect(find.text('En proceso'), findsAtLeastNWidgets(1));
     expect(find.text('Alta'), findsOneWidget);
     expect(find.textContaining('Responsable: Carlos Rivas'), findsOneWidget);
 

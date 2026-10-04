@@ -25,7 +25,9 @@ class Comentario {
           ? DateTime.parse(json['fechaCreacion'] as String)
           : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       esInterno: json['esInterno'] == true,
-      usuarioId: json['usuarioId'] is num ? (json['usuarioId'] as num).toInt() : 0,
+      usuarioId: json['usuarioId'] is num
+          ? (json['usuarioId'] as num).toInt()
+          : 0,
       usuarioNombre: json['usuarioNombre'] as String? ?? '',
       usuarioRol: json['usuarioRol'] as String? ?? '',
     );

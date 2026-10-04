@@ -10,9 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('muestra la carga del seguimiento', (tester) async {
-    await tester.pumpWidget(
-      _app(_ServicioPendiente()),
-    );
+    await tester.pumpWidget(_app(_ServicioPendiente()));
 
     expect(find.text('Cargando seguimiento...'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -116,7 +114,9 @@ void main() {
     expect(find.text('Sin evidencias adjuntas'), findsOneWidget);
   });
 
-  testWidgets('muestra el error de la API y permite reintentar', (tester) async {
+  testWidgets('muestra el error de la API y permite reintentar', (
+    tester,
+  ) async {
     final servicio = _ServicioFijo(
       _base(),
       error: 'No se pudo conectar con el servidor.',
@@ -136,9 +136,7 @@ void main() {
   });
 
   testWidgets('un 404 indica que la solicitud ya no existe', (tester) async {
-    await tester.pumpWidget(
-      _app(_ServicioFijo(_base(), statusCode: 404)),
-    );
+    await tester.pumpWidget(_app(_ServicioFijo(_base(), statusCode: 404)));
     await tester.pumpAndSettle();
 
     expect(find.text('La solicitud ya no existe.'), findsOneWidget);
@@ -147,10 +145,7 @@ void main() {
 
 Widget _app(SolicitudesService servicio) {
   return MaterialApp(
-    home: SeguimientoScreen(
-      solicitudId: 8,
-      solicitudesService: servicio,
-    ),
+    home: SeguimientoScreen(solicitudId: 8, solicitudesService: servicio),
   );
 }
 

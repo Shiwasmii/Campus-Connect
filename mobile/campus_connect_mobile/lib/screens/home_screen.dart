@@ -6,6 +6,11 @@ import '../services/solicitudes_service.dart';
 import '../storage/session_storage.dart';
 import '../services/selector_imagen.dart';
 import '../utils/nombre_visible.dart';
+import '../widgets/app_empty_state.dart';
+import '../widgets/app_error_state.dart';
+import '../widgets/app_loading.dart';
+import '../widgets/app_notice.dart';
+import '../widgets/app_section.dart';
 import '../widgets/solicitud_card.dart';
 import 'login_screen.dart';
 import 'nueva_solicitud_screen.dart';
@@ -85,9 +90,9 @@ class _HomeScreenState extends State<HomeScreen> {
     await widget.sessionStorage.cerrarSesion();
     if (!mounted) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => LoginScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
   }
 
   Future<void> _abrirNuevaSolicitud() async {
@@ -106,8 +111,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await _cargar();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(resultado.mensaje)),
+    mostrarAviso(
+      context,
+      resultado.mensaje,
+      esError: resultado.evidenciaFallida,
     );
   }
 
@@ -122,36 +129,58 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  bool get _mostrarResumen {
+    if (_cargando && _solicitudes.isEmpty) return false;
+    if (_error != null && _solicitudes.isEmpty) return false;
+    return true;
+  }
+
+  int get _pendientes =>
+      _solicitudes.where((solicitud) => solicitud.estado == 'Pendiente').length;
+
+  int get _enProceso =>
+      _solicitudes.where((solicitud) => solicitud.estado == 'EnProceso').length;
+
+  String get _vista {
+    if (_cargando && _solicitudes.isEmpty) return 'cargando';
+    if (_error != null && _solicitudes.isEmpty) return 'error';
+    if (_solicitudes.isEmpty) return 'vacio';
+    return 'lista';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colores = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Campus Connect')),
-      body: SafeArea(
+      body: AppFrame(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Hola, ${nombreVisible(widget.usuario.nombreCompleto)}',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  _Encabezado(
+                    nombre: nombreVisible(widget.usuario.nombreCompleto),
+                    rol: widget.usuario.rol,
+                  ),
+                  if (_mostrarResumen) ...[
+                    const SizedBox(height: 16),
+                    _ResumenSolicitudes(
+                      total: _solicitudes.length,
+                      pendientes: _pendientes,
+                      enProceso: _enProceso,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Chip(
-                    avatar: Icon(Icons.badge_outlined, color: colores.primary),
-                    label: Text(widget.usuario.rol),
-                  ),
-                  const SizedBox(height: 24),
+                  ],
+                  const SizedBox(height: 20),
                   Text(
                     'Mis solicitudes',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -160,38 +189,44 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _cargar,
-                child: _contenido(),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: KeyedSubtree(
+                    key: ValueKey(_vista),
+                    child: _contenido(),
+                  ),
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _abrirNuevaSolicitud,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nueva solicitud'),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
+            Material(
+              color: colores.surface,
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: _abrirNuevaSolicitud,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Nueva solicitud'),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: _cerrandoSesion ? null : _cerrarSesion,
-                    icon: _cerrandoSesion
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.logout),
-                    label: const Text('Cerrar sesión'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
+                    TextButton.icon(
+                      onPressed: _cerrandoSesion ? null : _cerrarSesion,
+                      icon: _cerrandoSesion
+                          ? SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colores.primary,
+                              ),
+                            )
+                          : const Icon(Icons.logout),
+                      label: const Text('Cerrar sesión'),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -202,65 +237,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _contenido() {
     if (_cargando && _solicitudes.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 80),
-          Center(child: CircularProgressIndicator()),
-          SizedBox(height: 16),
-          Center(child: Text('Cargando solicitudes...')),
-        ],
-      );
+      return const AppLoading(mensaje: 'Cargando solicitudes...');
     }
 
     if (_error != null && _solicitudes.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        children: [
-          const SizedBox(height: 48),
-          const Icon(Icons.cloud_off_outlined, size: 48),
-          const SizedBox(height: 12),
-          Text(
-            _error!,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: FilledButton(
-              onPressed: _cargar,
-              child: const Text('Reintentar'),
-            ),
-          ),
-        ],
-      );
+      return AppErrorState(mensaje: _error!, onRetry: _cargar);
     }
 
     if (_solicitudes.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        children: [
-          const SizedBox(height: 48),
-          Icon(
-            Icons.inbox_outlined,
-            size: 48,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Todavía no tienes solicitudes.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Cuando registres una, aparecerá en esta lista.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: const [
+          AppEmptyState(
+            icono: Icons.inbox_outlined,
+            titulo: 'Todavía no tienes solicitudes.',
+            mensaje: 'Cuando registres una, aparecerá en esta lista.',
           ),
         ],
       );
@@ -268,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
       itemCount: _solicitudes.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -278,6 +270,124 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () => _abrirSeguimiento(solicitud),
         );
       },
+    );
+  }
+}
+
+class _Encabezado extends StatelessWidget {
+  final String nombre;
+  final String rol;
+
+  const _Encabezado({required this.nombre, required this.rol});
+
+  @override
+  Widget build(BuildContext context) {
+    final colores = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colores.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: colores.primary,
+            foregroundColor: colores.onPrimary,
+            child: Text(
+              nombre.isEmpty ? '?' : nombre[0].toUpperCase(),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hola, $nombre',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colores.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  rol,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: colores.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResumenSolicitudes extends StatelessWidget {
+  final int total;
+  final int pendientes;
+  final int enProceso;
+
+  const _ResumenSolicitudes({
+    required this.total,
+    required this.pendientes,
+    required this.enProceso,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _DatoResumen(valor: total, etiqueta: 'Total'),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _DatoResumen(valor: pendientes, etiqueta: 'Pendientes'),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _DatoResumen(valor: enProceso, etiqueta: 'En proceso'),
+        ),
+      ],
+    );
+  }
+}
+
+class _DatoResumen extends StatelessWidget {
+  final int valor;
+  final String etiqueta;
+
+  const _DatoResumen({required this.valor, required this.etiqueta});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        child: Column(
+          children: [
+            Text(
+              '$valor',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              etiqueta,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

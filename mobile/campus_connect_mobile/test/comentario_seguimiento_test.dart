@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('un comentario vacío no se envía', (tester) async {
+    _ampliar(tester);
     final servicio = _Servicio();
     await tester.pumpWidget(_app(servicio));
     await tester.pumpAndSettle();
@@ -22,11 +23,15 @@ void main() {
   });
 
   testWidgets('un comentario con solo espacios no se envía', (tester) async {
+    _ampliar(tester);
     final servicio = _Servicio();
     await tester.pumpWidget(_app(servicio));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byKey(const Key('campo-comentario')), '   \n  ');
+    await tester.enterText(
+      find.byKey(const Key('campo-comentario')),
+      '   \n  ',
+    );
     await _pulsarEnviar(tester);
 
     expect(find.text('Escribe un comentario.'), findsOneWidget);
@@ -36,6 +41,7 @@ void main() {
   testWidgets('envía el usuario de la sesión y refresca el seguimiento', (
     tester,
   ) async {
+    _ampliar(tester);
     final servicio = _Servicio();
     await tester.pumpWidget(_app(servicio, usuarioId: 27));
     await tester.pumpAndSettle();
@@ -57,6 +63,7 @@ void main() {
   });
 
   testWidgets('si la API falla se conserva el texto', (tester) async {
+    _ampliar(tester);
     final servicio = _Servicio()
       ..errorEnvio = 'No se pudo enviar el comentario.';
     await tester.pumpWidget(_app(servicio, usuarioId: 27));
@@ -76,6 +83,7 @@ void main() {
   });
 
   testWidgets('no envía el comentario dos veces', (tester) async {
+    _ampliar(tester);
     final servicio = _Servicio()..espera = Completer<Comentario>();
     await tester.pumpWidget(_app(servicio, usuarioId: 27));
     await tester.pumpAndSettle();
@@ -104,6 +112,13 @@ void main() {
     expect(servicio.envios, 1);
     expect(servicio.consultas, 2);
   });
+}
+
+void _ampliar(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2600);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
 }
 
 Widget _app(_Servicio servicio, {int usuarioId = 27}) {

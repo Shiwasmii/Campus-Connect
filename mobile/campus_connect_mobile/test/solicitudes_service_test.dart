@@ -15,11 +15,7 @@ void main() {
       uriConsultada = request.url;
       return http.Response(
         jsonEncode([
-          _json(
-            id: 1,
-            codigo: 'TKT-ANTIGUA',
-            fecha: '2026-01-01T10:00:00Z',
-          ),
+          _json(id: 1, codigo: 'TKT-ANTIGUA', fecha: '2026-01-01T10:00:00Z'),
           _json(
             id: 2,
             codigo: 'TKT-RECIENTE',
@@ -148,11 +144,9 @@ void main() {
       );
     });
 
-    final evidencia = await SolicitudesService(client: client).adjuntarEvidencia(
-      solicitudId: 8,
-      usuarioId: 15,
-      archivo: archivo,
-    );
+    final evidencia = await SolicitudesService(
+      client: client,
+    ).adjuntarEvidencia(solicitudId: 8, usuarioId: 15, archivo: archivo);
 
     expect(uri.path, '/api/SolicitudesApi/8/evidencias');
     expect(tipo, contains('multipart/form-data'));
@@ -248,11 +242,12 @@ void main() {
       );
     });
 
-    final comentario = await SolicitudesService(client: client).agregarComentario(
-      solicitudId: 8,
-      usuarioId: 27,
-      mensaje: '  El problema sigue ocurriendo.  ',
-    );
+    final comentario = await SolicitudesService(client: client)
+        .agregarComentario(
+          solicitudId: 8,
+          usuarioId: 27,
+          mensaje: '  El problema sigue ocurriendo.  ',
+        );
 
     expect(uri.path, '/api/SolicitudesApi/8/comentarios');
     expect(body['mensaje'], 'El problema sigue ocurriendo.');

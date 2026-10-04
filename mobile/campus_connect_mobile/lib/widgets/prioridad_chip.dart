@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 class PrioridadChip extends StatelessWidget {
   final String prioridad;
 
@@ -36,32 +38,32 @@ _EstiloPrioridad _estiloPrioridad(String prioridad) {
     case 'Baja':
       return const _EstiloPrioridad(
         'Baja',
-        Color(0xFFE8F5E9),
-        Color(0xFF2E7D32),
+        AppColors.prioridadBajaFondo,
+        AppColors.prioridadBajaTexto,
       );
     case 'Media':
       return const _EstiloPrioridad(
         'Media',
-        Color(0xFFE3F2FD),
-        Color(0xFF1565C0),
+        AppColors.prioridadMediaFondo,
+        AppColors.prioridadMediaTexto,
       );
     case 'Alta':
       return const _EstiloPrioridad(
         'Alta',
-        Color(0xFFFFF3E0),
-        Color(0xFFE65100),
+        AppColors.prioridadAltaFondo,
+        AppColors.prioridadAltaTexto,
       );
     case 'Urgente':
       return const _EstiloPrioridad(
         'Urgente',
-        Color(0xFFFDECEA),
-        Color(0xFFB3261E),
+        AppColors.prioridadUrgenteFondo,
+        AppColors.prioridadUrgenteTexto,
       );
     default:
       return _EstiloPrioridad(
         prioridad,
-        const Color(0xFFEEEEEE),
-        const Color(0xFF424242),
+        AppColors.neutroFondo,
+        AppColors.neutroTexto,
       );
   }
 }

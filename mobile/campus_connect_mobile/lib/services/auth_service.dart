@@ -39,10 +39,7 @@ class AuthService {
       final response = await http.post(
         ApiConfig.loginUri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'correo': correo.trim(),
-          'password': password,
-        }),
+        body: jsonEncode({'correo': correo.trim(), 'password': password}),
       );
 
       final data = _leerJson(response.body);

@@ -119,7 +119,10 @@ void main() {
     await tester.tap(find.text('Nueva solicitud'));
     await tester.pumpAndSettle();
     await _completarFormulario(tester);
-    await tester.tap(find.text('Elegir imagen'));
+    final elegirImagen = find.text('Elegir imagen');
+    await tester.ensureVisible(elegirImagen);
+    await tester.pumpAndSettle();
+    await tester.tap(elegirImagen);
     await tester.pumpAndSettle();
 
     expect(find.text('aula.jpg'), findsOneWidget);
@@ -147,7 +150,10 @@ void main() {
     await tester.tap(find.text('Nueva solicitud'));
     await tester.pumpAndSettle();
     await _completarFormulario(tester);
-    await tester.tap(find.text('Elegir imagen'));
+    final elegirImagen = find.text('Elegir imagen');
+    await tester.ensureVisible(elegirImagen);
+    await tester.pumpAndSettle();
+    await tester.tap(elegirImagen);
     await tester.pumpAndSettle();
     await _pulsarEnviar(tester);
     await tester.pump();
@@ -179,7 +185,10 @@ void main() {
     await tester.tap(find.text('Nueva solicitud'));
     await tester.pumpAndSettle();
     await _completarFormulario(tester);
-    await tester.tap(find.text('Elegir imagen'));
+    final elegirImagen = find.text('Elegir imagen');
+    await tester.ensureVisible(elegirImagen);
+    await tester.pumpAndSettle();
+    await tester.tap(elegirImagen);
     await tester.pumpAndSettle();
     await _pulsarEnviar(tester);
     await tester.pump();
@@ -227,7 +236,10 @@ Future<void> _pulsarEnviar(WidgetTester tester) async {
 }
 
 Future<void> _elegir(WidgetTester tester, Key campo, String etiqueta) async {
-  await tester.tap(find.byKey(campo));
+  final control = find.byKey(campo);
+  await tester.ensureVisible(control);
+  await tester.pumpAndSettle();
+  await tester.tap(control);
   await tester.pumpAndSettle();
   await tester.tap(find.text(etiqueta).last);
   await tester.pumpAndSettle();

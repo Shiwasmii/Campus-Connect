@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_colors.dart';
+
 class EstadoChip extends StatelessWidget {
   final String estado;
 
@@ -35,38 +37,38 @@ _EstiloEstado _estiloEstado(String estado) {
     case 'Pendiente':
       return const _EstiloEstado(
         'Pendiente',
-        Color(0xFFFFF4D6),
-        Color(0xFF8A5A00),
+        AppColors.pendienteFondo,
+        AppColors.pendienteTexto,
       );
     case 'EnProceso':
       return const _EstiloEstado(
         'En proceso',
-        Color(0xFFE3F2FD),
-        Color(0xFF0D47A1),
+        AppColors.procesoFondo,
+        AppColors.procesoTexto,
       );
     case 'Atendida':
       return const _EstiloEstado(
         'Atendida',
-        Color(0xFFE5F6EE),
-        Color(0xFF0B6E4F),
+        AppColors.atendidaFondo,
+        AppColors.atendidaTexto,
       );
     case 'Cancelada':
       return const _EstiloEstado(
         'Cancelada',
-        Color(0xFFEEEEEE),
-        Color(0xFF616161),
+        AppColors.canceladaFondo,
+        AppColors.canceladaTexto,
       );
     case 'Rechazada':
       return const _EstiloEstado(
         'Rechazada',
-        Color(0xFFFDECEA),
-        Color(0xFFB3261E),
+        AppColors.rechazadaFondo,
+        AppColors.rechazadaTexto,
       );
     default:
       return _EstiloEstado(
         estado,
-        const Color(0xFFEEEEEE),
-        const Color(0xFF424242),
+        AppColors.neutroFondo,
+        AppColors.neutroTexto,
       );
   }
 }

@@ -7,10 +7,7 @@ class SelectorImagen {
   ImagePicker get _imagePicker => _picker ??= ImagePicker();
 
   Future<XFile?> tomarFoto() {
-    return _imagePicker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-    );
+    return _imagePicker.pickImage(source: ImageSource.camera, imageQuality: 85);
   }
 
   Future<XFile?> elegirImagen() {

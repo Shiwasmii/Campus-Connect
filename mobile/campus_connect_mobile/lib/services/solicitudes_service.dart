@@ -44,14 +44,10 @@ class SolicitudesService {
 
       final solicitudes = decoded
           .whereType<Map>()
-          .map(
-            (item) => Solicitud.fromJson(Map<String, dynamic>.from(item)),
-          )
+          .map((item) => Solicitud.fromJson(Map<String, dynamic>.from(item)))
           .toList();
 
-      solicitudes.sort(
-        (a, b) => b.fechaCreacion.compareTo(a.fechaCreacion),
-      );
+      solicitudes.sort((a, b) => b.fechaCreacion.compareTo(a.fechaCreacion));
       return solicitudes;
     } on SolicitudesException {
       rethrow;
@@ -82,9 +78,7 @@ class SolicitudesService {
       }
 
       if (response.statusCode != 200) {
-        throw const SolicitudesException(
-          'No se pudo cargar el seguimiento.',
-        );
+        throw const SolicitudesException('No se pudo cargar el seguimiento.');
       }
 
       final decoded = jsonDecode(response.body);
@@ -118,21 +112,20 @@ class SolicitudesService {
     required int solicitanteId,
   }) async {
     try {
-      final response = await _post(
-        ApiConfig.crearSolicitudUri,
-        {
-          'titulo': titulo.trim(),
-          'descripcion': descripcion.trim(),
-          'categoria': categoria,
-          'prioridad': prioridad,
-          'solicitanteId': solicitanteId,
-        },
-      );
+      final response = await _post(ApiConfig.crearSolicitudUri, {
+        'titulo': titulo.trim(),
+        'descripcion': descripcion.trim(),
+        'categoria': categoria,
+        'prioridad': prioridad,
+        'solicitanteId': solicitanteId,
+      });
 
       if (response.statusCode == 201) {
         final decoded = jsonDecode(response.body);
         if (decoded is! Map) {
-          throw const SolicitudesException('Respuesta inesperada del servidor.');
+          throw const SolicitudesException(
+            'Respuesta inesperada del servidor.',
+          );
         }
         return Solicitud.fromJson(Map<String, dynamic>.from(decoded));
       }
@@ -165,19 +158,18 @@ class SolicitudesService {
     required String mensaje,
   }) async {
     try {
-      final response = await _post(
-        ApiConfig.comentarioUri(solicitudId),
-        {
-          'mensaje': mensaje.trim(),
-          'usuarioId': usuarioId,
-          'esInterno': false,
-        },
-      );
+      final response = await _post(ApiConfig.comentarioUri(solicitudId), {
+        'mensaje': mensaje.trim(),
+        'usuarioId': usuarioId,
+        'esInterno': false,
+      });
 
       if (response.statusCode == 201) {
         final decoded = jsonDecode(response.body);
         if (decoded is! Map) {
-          throw const SolicitudesException('Respuesta inesperada del servidor.');
+          throw const SolicitudesException(
+            'Respuesta inesperada del servidor.',
+          );
         }
         return Comentario.fromJson(Map<String, dynamic>.from(decoded));
       }
@@ -233,7 +225,9 @@ class SolicitudesService {
       if (response.statusCode == 201) {
         final decoded = jsonDecode(response.body);
         if (decoded is! Map) {
-          throw const SolicitudesException('Respuesta inesperada del servidor.');
+          throw const SolicitudesException(
+            'Respuesta inesperada del servidor.',
+          );
         }
         return Evidencia.fromJson(Map<String, dynamic>.from(decoded));
       }
