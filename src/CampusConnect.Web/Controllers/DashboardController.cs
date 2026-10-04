@@ -190,11 +190,15 @@ public class DashboardController : Controller
         {
             // Registrar comentario con el usuario asignado o administrativo base (ID 2 de seed data)
             var autorId = solicitud.AsignadoAId ?? 2;
+            var notaLimpia = nota.Trim();
+            var mensaje = estadoAnterior != nuevoEstado
+                ? $"Cambio de estado: de {estadoAnterior} a {nuevoEstado}. Nota: {notaLimpia}"
+                : $"Nota: {notaLimpia}";
             var comentario = new Comentario
             {
                 SolicitudId = solicitudId,
                 UsuarioId = autorId,
-                Mensaje = $"Cambio de estado: de {estadoAnterior} a {nuevoEstado}. Nota: {nota.Trim()}",
+                Mensaje = mensaje,
                 EsInterno = false,
                 FechaCreacion = DateTime.UtcNow
             };
