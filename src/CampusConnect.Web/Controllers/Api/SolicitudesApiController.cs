@@ -155,7 +155,7 @@ public class SolicitudesApiController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<EvidenciaDto>> AdjuntarEvidencia(
         [FromRoute] int id,
-        [FromForm] IFormFile archivo,
+        IFormFile archivo,
         [FromForm] int subidoPorId)
     {
         if (archivo == null || archivo.Length == 0)
